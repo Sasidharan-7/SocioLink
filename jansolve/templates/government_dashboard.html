@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Government Official Dashboard — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Command & Control Center</h1>
+        <p>Government of Jharkhand &bull; Societal Problem Verification, Allocation & Impact Governance</p>
+    </div>
+    <div>
+        <a href="{{ url_for('government.problem_list') }}" class="btn btn-primary">
+            <i class="fa-solid fa-list-check"></i> Manage All Problems
+        </a>
+    </div>
+</div>
+
+<!-- 6 Stats Cards -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="fa-solid fa-inbox"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total Reported</div>
+        </div>
+    </div>
+
+    <div class="stat-card saffron">
+        <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.reported }}</div>
+            <div class="stat-label">Pending Verification</div>
+        </div>
+    </div>
+
+    <div class="stat-card teal">
+        <div class="stat-icon"><i class="fa-solid fa-stamp"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.verified }}</div>
+            <div class="stat-label">Verified Issues</div>
+        </div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.under_review }}</div>
+            <div class="stat-label">Under Review</div>
+        </div>
+    </div>
+
+    <div class="stat-card saffron">
+        <div class="stat-icon"><i class="fa-solid fa-gears"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.in_progress }}</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.completed }}</div>
+            <div class="stat-label">Completed & Solved</div>
+        </div>
+    </div>
+</div>
+
+<!-- Urgent Verifications Banner if any -->
+{% if pending_verification %}
+<div class="card mb-3" style="border-left: 4px solid var(--saffron);">
+    <div class="card-header" style="background: #fffbeb;">
+        <h3 style="color: #92400e;"><i class="fa-solid fa-triangle-exclamation"></i> Action Required: Pending Citizen Complaints Needing Verification</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Problem Title</th>
+                        <th>Reporter</th>
+                        <th>District / Location</th>
+                        <th>AI Category</th>
+                        <th>AI Priority</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pending_verification %}
+                    <tr>
+                        <td><strong>{{ p.title }}</strong></td>
+                        <td>{{ p.reporter_name }}</td>
+                        <td><i class="fa-solid fa-location-dot"></i> {{ p.location }}</td>
+                        <td><span class="badge badge-verified">{{ p.category or p.ai_category }}</span></td>
+                        <td><span class="badge badge-{{ (p.priority or 'MEDIUM')|lower }}">{{ p.priority or 'MEDIUM' }}</span></td>
+                        <td>
+                            <a href="{{ url_for('government.view_problem', problem_id=p.id) }}" class="btn btn-primary btn-sm">
+                                Review & Verify
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Grid: Analytics Chart & Recent Complaints -->
+<div class="grid grid-2 gap-3">
+    <!-- Category Distribution Canvas Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-chart-column"></i> Problems by Domain Category</h3>
+        </div>
+        <div class="card-body">
+            <canvas id="categoryChart" style="width: 100%; height: 240px;"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Complaints Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent State Complaints</h3>
+            <a href="{{ url_for('government.problem_list') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in recent_problems %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('government.view_problem', problem_id=p.id) }}" style="font-weight: 600; color: var(--text);">
+                                    {{ p.title }}
+                                </a>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ p.location }}</div>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ p.status|lower|replace('_', '-') }}">{{ p.status|replace('_', ' ') }}</span>
+                            </td>
+                            <td style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">
+                                {{ p.created_at[:10] if p.created_at else '' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const labels = [{% for c in category_stats %}"{{ c.category }}",{% endfor %}];
+    const data = [{% for c in category_stats %}{{ c.count }},{% endfor %}];
+    const colors = ['#1a237e', '#ff6f00', '#2e7d32', '#7c3aed', '#0d9488', '#f59e0b', '#ef4444', '#3b82f6'];
+    
+    if (window.renderBarChart) {
+        window.renderBarChart('categoryChart', labels, data, colors);
+    }
+});
+</script>
+{% endblock %}

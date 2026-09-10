@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Innovator Profile & Skills — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Innovator Profile & Skills Registry</h1>
+        <p>Keep your engineering competencies updated so our AI matcher pairs you with relevant societal challenges.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('expert.dashboard') }}" class="btn btn-outline">
+            &larr; Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="card" style="max-width: 680px; margin: 0 auto;">
+    <div class="card-header" style="background: var(--primary-50);">
+        <h3 style="color: var(--primary);"><i class="fa-solid fa-user-graduate"></i> Academic & Technical Profile</h3>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('expert.profile') }}" method="POST">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" class="form-control" value="{{ user.name }}" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" class="form-control" value="{{ user.email }}" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="organization">University / Institution / Organization <span class="required">*</span></label>
+                <input type="text" id="organization" name="organization" class="form-control" 
+                       placeholder="e.g. BIT Mesra, IIT(ISM) Dhanbad, NIT Jamshedpur" 
+                       value="{{ user.organization or '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="skills">Key Skills & Engineering Disciplines <span class="required">*</span></label>
+                <textarea id="skills" name="skills" class="form-control" rows="3"
+                          placeholder="e.g. Environmental Engineering, Water Treatment, Solar Microgrids, IoT, Civil Engineering (comma separated)" required>{{ user.skills or '' }}</textarea>
+                <div class="form-hint">Used by our Scikit-Learn TF-IDF engine to compute cosine similarity against incoming problems.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="bio">Bio & Research Interests</label>
+                <textarea id="bio" name="bio" class="form-control" rows="3"
+                          placeholder="Brief summary of your academic background or research group...">{{ user.bio or '' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                <i class="fa-solid fa-floppy-disk"></i> Update Profile & Refresh Recommendations
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

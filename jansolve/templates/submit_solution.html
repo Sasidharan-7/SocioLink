@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Propose Solution — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            <a href="{{ url_for('citizen.problem_details', problem_id=problem.id) }}">&larr; Back to Problem Overview</a>
+        </div>
+        <h1>Submit Collaborative Solution</h1>
+        <p>Proposing engineering, administrative or community solution for: <strong>{{ problem.title }}</strong></p>
+    </div>
+</div>
+
+<div class="grid grid-3 gap-3" style="align-items: flex-start;">
+    <!-- Form Card (2 Cols) -->
+    <div style="grid-column: span 2;">
+        <div class="card">
+            <div class="card-header" style="background: var(--primary-50);">
+                <h3 style="color: var(--primary);"><i class="fa-solid fa-pen-ruler"></i> Solution Proposal Form</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('expert.submit_solution', problem_id=problem.id) }}" method="POST">
+                    <div class="form-group">
+                        <label for="title">Solution Title <span class="required">*</span></label>
+                        <input type="text" id="title" name="title" class="form-control" 
+                               placeholder="e.g. Solar-Powered Decentralized Water Treatment Unit" 
+                               value="{{ title or '' }}" required autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Detailed Technical & Execution Description <span class="required">*</span></label>
+                        <textarea id="description" name="description" class="form-control" rows="6"
+                                  placeholder="Explain the proposed methodology, technology stack, phases of implementation, and how this solves the root problem..." required>{{ description or '' }}</textarea>
+                    </div>
+
+                    <div class="grid grid-2 gap-2">
+                        <div class="form-group">
+                            <label for="estimated_cost">Estimated Budget / Cost</label>
+                            <input type="text" id="estimated_cost" name="estimated_cost" class="form-control" 
+                                   placeholder="e.g. ₹3,50,000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="implementation_time">Implementation Timeline</label>
+                            <input type="text" id="implementation_time" name="implementation_time" class="form-control" 
+                                   placeholder="e.g. 2 months or 6 weeks">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expected_impact">Expected Ground Impact</label>
+                        <input type="text" id="expected_impact" name="expected_impact" class="form-control" 
+                               placeholder="e.g. 1500 families gain safe drinking water; 80% decrease in waterborne diseases">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="required_resources">Required Resources, Hardware & Skills</label>
+                        <input type="text" id="required_resources" name="required_resources" class="form-control" 
+                               placeholder="e.g. IoT sensors, UV filters, solar panels, community volunteers">
+                    </div>
+
+                    <button type="submit" class="btn btn-saffron btn-lg" style="width: 100%; margin-top: 10px;">
+                        <i class="fa-solid fa-paper-plane"></i> Publish Solution for Citizen Voting & Gov Review
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Col: Challenge Context & Quick Demo Presets -->
+    <div>
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-circle-info"></i> Challenge Context</h3>
+            </div>
+            <div class="card-body" style="font-size: 13px;">
+                <div style="font-weight: 700; color: var(--text); margin-bottom: 6px;">
+                    {{ problem.title }}
+                </div>
+                <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px;">
+                    {{ problem.description }}
+                </p>
+                <div style="font-size: 12px; color: var(--text-muted);">
+                    <i class="fa-solid fa-location-dot"></i> {{ problem.location }} &bull; {{ problem.category }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-wand-magic-sparkles text-saffron"></i> Quick Demo Solution</h3>
+            </div>
+            <div class="card-body" style="font-size: 13px;">
+                <p style="color: var(--text-muted); margin-bottom: 10px;">Click to auto-fill for SIH presentation:</p>
+                <button type="button" class="btn btn-outline btn-sm text-left" style="width: 100%; justify-content: flex-start; margin-bottom: 8px;"
+                        onclick="fillDemoSolution(
+                            'Smart IoT Bin System with Route Optimization',
+                            'Deploy 15 IoT ultrasonic waste fill-level sensors inside community garbage collection bins. Sensors transmit live telemetry over LoRaWAN to a municipal dashboard. A route-optimization algorithm directs municipal compactor trucks only to bins exceeding 75% capacity, cutting fuel costs by 40% and eliminating roadside overflow.',
+                            '₹2,80,000',
+                            '6 weeks',
+                            'Zero garbage overflow, 4500 school children and residents protected from mosquito breeding',
+                            'Ultrasonic fill sensors, LoRaWAN gateway, open-source routing engine, local sanitation staff'
+                        )">
+                    <i class="fa-solid fa-recycle"></i> Fill: IoT Smart Waste Solution
+                </button>
+                <button type="button" class="btn btn-outline btn-sm text-left" style="width: 100%; justify-content: flex-start;"
+                        onclick="fillDemoSolution(
+                            'Solar RO & Multi-Stage Sand Filtration Plant',
+                            'Install an autonomous solar-powered water purification unit at the municipal distribution junction. The system couples coagulant-assisted rapid sand filtration with UV sterilization and RO membranes, generating 6000 L/day of pure water independent of grid electricity.',
+                            '₹4,20,000',
+                            '2 months',
+                            'Safe drinking water for 3500 tribal residents; zero recurring electricity expenditure',
+                            '4 kW solar PV array, multi-grade sand filter, UV chambers, 10000 L food-grade holding tank'
+                        )">
+                    <i class="fa-solid fa-faucet-drip"></i> Fill: Solar Water Purification
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillDemoSolution(title, desc, cost, time, impact, res) {
+    document.getElementById('title').value = title;
+    document.getElementById('description').value = desc;
+    document.getElementById('estimated_cost').value = cost;
+    document.getElementById('implementation_time').value = time;
+    document.getElementById('expected_impact').value = impact;
+    document.getElementById('required_resources').value = res;
+}
+</script>
+{% endblock %}

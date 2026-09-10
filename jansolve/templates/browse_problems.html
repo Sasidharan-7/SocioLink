@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Societal Challenges — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Societal Challenges in Jharkhand</h1>
+        <p>Explore verified civic issues, review community complaints, and track problem resolution.</p>
+    </div>
+    {% if current_user and current_user.role == 'citizen' %}
+    <div>
+        <a href="{{ url_for('citizen.report_problem') }}" class="btn btn-saffron">
+            <i class="fa-solid fa-circle-plus"></i> Report a Problem
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Search & Filter Card -->
+<div class="card mb-3" style="padding: 20px;">
+    <form action="{{ url_for('citizen.browse_problems') }}" method="GET" class="grid grid-4 gap-2" style="align-items: flex-end;">
+        <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Search Keywords</label>
+            <input type="text" name="q" value="{{ query or '' }}" class="form-control" placeholder="Search by title, location, keywords...">
+        </div>
+
+        <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Category</label>
+            <select name="category" class="form-control">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                    <option value="{{ c.name }}" {% if cat_filter == c.name %}selected{% endif %}>{{ c.icon }} {{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Status</label>
+            <select name="status" class="form-control">
+                <option value="">All Statuses</option>
+                <option value="REPORTED" {% if status_filter == 'REPORTED' %}selected{% endif %}>Reported</option>
+                <option value="VERIFIED" {% if status_filter == 'VERIFIED' %}selected{% endif %}>Verified</option>
+                <option value="UNDER_REVIEW" {% if status_filter == 'UNDER_REVIEW' %}selected{% endif %}>Under Review</option>
+                <option value="SOLUTION_SELECTED" {% if status_filter == 'SOLUTION_SELECTED' %}selected{% endif %}>Solution Selected</option>
+                <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+            </select>
+        </div>
+
+        <div class="flex gap-1">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <i class="fa-solid fa-magnifying-glass"></i> Filter
+            </button>
+            <a href="{{ url_for('citizen.browse_problems') }}" class="btn btn-outline" title="Reset Filters">
+                <i class="fa-solid fa-rotate-right"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Problems Grid -->
+<div class="challenges-grid">
+    {% if problems %}
+        {% for p in problems %}
+        <div class="challenge-card">
+            <div class="challenge-meta">
+                <span>{{ p.category_icon or '📋' }} {{ p.category }}</span>
+                <span>&bull;</span>
+                <span><i class="fa-solid fa-location-dot"></i> {{ p.location }}</span>
+            </div>
+            <h3><a href="{{ url_for('citizen.problem_details', problem_id=p.id) }}">{{ p.title }}</a></h3>
+            <p>{{ p.description }}</p>
+
+            <div class="challenge-footer">
+                <div class="flex items-center gap-1">
+                    <span class="badge badge-{{ p.status|lower|replace('_', '-') }}">{{ p.status|replace('_', ' ') }}</span>
+                    {% if p.priority == 'HIGH' %}
+                        <span class="badge badge-high">High</span>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span style="font-size: 12px; color: var(--text-muted);">
+                        <i class="fa-solid fa-lightbulb"></i> {{ p.solution_count or 0 }} sols
+                    </span>
+                    <a href="{{ url_for('citizen.problem_details', problem_id=p.id) }}" class="btn btn-outline btn-sm">
+                        View Details &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-icon"><i class="fa-solid fa-filter-circle-xmark"></i></div>
+            <h3>No problems found matching your criteria</h3>
+            <p>Try resetting the search filters or check back later.</p>
+            <a href="{{ url_for('citizen.browse_problems') }}" class="btn btn-primary btn-sm mt-2">Clear Filters</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

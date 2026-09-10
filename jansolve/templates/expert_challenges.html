@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Open Civic Challenges — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Open Societal Challenges</h1>
+        <p>Verified problems across Jharkhand waiting for student engineering solutions and expert policy interventions.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('expert.dashboard') }}" class="btn btn-outline">
+            &larr; Back to Innovator Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card mb-3" style="padding: 16px 20px;">
+    <form action="{{ url_for('expert.challenges') }}" method="GET" class="grid grid-3 gap-2" style="align-items: flex-end;">
+        <div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Search Keyword</label>
+            <input type="text" name="q" value="{{ query or '' }}" class="form-control" placeholder="Search challenges by keyword...">
+        </div>
+
+        <div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Domain Area</label>
+            <select name="category" class="form-control">
+                <option value="">All Problem Domains</option>
+                {% for c in categories %}
+                    <option value="{{ c.name }}" {% if cat_filter == c.name %}selected{% endif %}>{{ c.icon }} {{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex gap-1">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+            <a href="{{ url_for('expert.challenges') }}" class="btn btn-outline" title="Reset">
+                <i class="fa-solid fa-rotate-left"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Challenges Grid -->
+<div class="challenges-grid">
+    {% if challenges %}
+        {% for p in challenges %}
+        <div class="challenge-card">
+            <div class="challenge-meta">
+                <span>{{ p.category_icon or '💡' }} {{ p.category }}</span>
+                <span>&bull;</span>
+                <span><i class="fa-solid fa-location-dot"></i> {{ p.location }}</span>
+            </div>
+            <h3><a href="{{ url_for('citizen.problem_details', problem_id=p.id) }}">{{ p.title }}</a></h3>
+            <p>{{ p.description }}</p>
+
+            <div class="challenge-footer">
+                <span class="badge badge-verified">
+                    {{ p.solution_count or 0 }} Proposed Solutions
+                </span>
+
+                <a href="{{ url_for('expert.submit_solution', problem_id=p.id) }}" class="btn btn-saffron btn-sm">
+                    <i class="fa-solid fa-pen-ruler"></i> Submit Solution
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state card" style="grid-column: 1 / -1;">
+            <p>No open challenges matching your search criteria.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

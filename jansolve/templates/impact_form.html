@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Record Ground Impact Metrics — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            <a href="{{ url_for('government.view_problem', problem_id=problem.id) }}">&larr; Back to Problem Console</a>
+        </div>
+        <h1>Record Ground Impact & Outcomes</h1>
+        <p>Document verified improvement metrics, beneficiaries, and public expenditure for: <strong>{{ problem.title }}</strong></p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header" style="background: var(--primary-50);">
+        <h3 style="color: var(--primary);"><i class="fa-solid fa-chart-line"></i> Ground Impact Audit Form</h3>
+        <span class="badge badge-completed">Final Stage</span>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('government.record_impact', problem_id=problem.id) }}" method="POST">
+            <!-- Before / After Metrics Row -->
+            <div class="grid grid-2 gap-2">
+                <div class="card card-body" style="background: #fef2f2; border: 1px solid #fecaca;">
+                    <h4 style="font-size: 14px; color: #991b1b; margin-bottom: 10px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Before Metric (Baseline)
+                    </h4>
+                    <div class="form-group">
+                        <label for="before_metric">Metric Name <span class="required">*</span></label>
+                        <input type="text" id="before_metric" name="before_metric" class="form-control" 
+                               placeholder="e.g. Complaints per month or Turbidity NTU" 
+                               value="{{ impact.before_metric if impact else 'Citizen complaints per month' }}" required>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="before_value">Numeric Baseline Value <span class="required">*</span></label>
+                        <input type="number" step="any" id="before_value" name="before_value" class="form-control" 
+                               placeholder="e.g. 120" 
+                               value="{{ impact.before_value if impact else '120' }}" required oninput="calculateImprovement()">
+                    </div>
+                </div>
+
+                <div class="card card-body" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                    <h4 style="font-size: 14px; color: #166534; margin-bottom: 10px;">
+                        <i class="fa-solid fa-circle-check"></i> After Metric (Outcome)
+                    </h4>
+                    <div class="form-group">
+                        <label for="after_metric">Metric Name <span class="required">*</span></label>
+                        <input type="text" id="after_metric" name="after_metric" class="form-control" 
+                               placeholder="e.g. Complaints per month" 
+                               value="{{ impact.after_metric if impact else 'Citizen complaints per month' }}" required>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="after_value">Numeric Outcome Value <span class="required">*</span></label>
+                        <input type="number" step="any" id="after_value" name="after_value" class="form-control" 
+                               placeholder="e.g. 35" 
+                               value="{{ impact.after_value if impact else '35' }}" required oninput="calculateImprovement()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Calculated Improvement Banner -->
+            <div id="improvementBanner" class="card mt-2 mb-3 text-center" style="padding: 16px; background: #ecfdf5; border: 2px dashed var(--green);">
+                <div style="font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 700;">Calculated Impact Improvement</div>
+                <div id="improvementVal" style="font-size: 32px; font-weight: 900; color: var(--green); margin: 4px 0;">70.8%</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Measured problem reduction achieved through solution deployment</div>
+            </div>
+
+            <!-- Beneficiaries and Cost -->
+            <div class="grid grid-3 gap-2">
+                <div class="form-group">
+                    <label for="people_benefited">People Benefited <span class="required">*</span></label>
+                    <input type="number" id="people_benefited" name="people_benefited" class="form-control" 
+                           placeholder="e.g. 2500" value="{{ impact.people_benefited if impact else '2500' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="implementation_cost">Total Cost of Execution <span class="required">*</span></label>
+                    <input type="text" id="implementation_cost" name="implementation_cost" class="form-control" 
+                           placeholder="e.g. ₹4,50,000" value="{{ impact.implementation_cost if impact else '₹4,50,000' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="completion_date">Date of Completion <span class="required">*</span></label>
+                    <input type="date" id="completion_date" name="completion_date" class="form-control" 
+                           value="{{ impact.completion_date if impact else '' }}" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Detailed Impact Narrative</label>
+                <textarea id="description" name="description" class="form-control" rows="4" 
+                          placeholder="Describe the physical installation, citizen response, and sustainability protocol...">{{ impact.description if impact else 'Decentralized solar water purification unit successfully commissioned with automated UV filtration and 5000 L/day output. Water testing confirms zero bacterial count.' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-green btn-lg" style="width: 100%;">
+                <i class="fa-solid fa-circle-check"></i> Save Metrics & Mark Problem as COMPLETED
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function calculateImprovement() {
+    const before = parseFloat(document.getElementById('before_value').value) || 0;
+    const after = parseFloat(document.getElementById('after_value').value) || 0;
+    let imp = 0;
+    if (before > 0) {
+        imp = (((before - after) / before) * 100).toFixed(1);
+    }
+    document.getElementById('improvementVal').innerText = imp + '%';
+}
+document.addEventListener('DOMContentLoaded', () => {
+    // Set default date to today if blank
+    const dateInput = document.getElementById('completion_date');
+    if (!dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    calculateImprovement();
+});
+</script>
+{% endblock %}

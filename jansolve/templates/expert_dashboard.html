@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Innovator Hub — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Innovator & Expert Portal</h1>
+        <p>Propose engineering & policy solutions for verified societal problems in Jharkhand.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('expert.challenges') }}" class="btn btn-saffron">
+            <i class="fa-solid fa-compass"></i> Explore All Challenges
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="fa-solid fa-lightbulb"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_solutions }}</div>
+            <div class="stat-label">Solutions Submitted by You</div>
+        </div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-icon"><i class="fa-solid fa-trophy"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ selected_solutions }}</div>
+            <div class="stat-label">Government Selected</div>
+        </div>
+    </div>
+
+    <div class="stat-card saffron">
+        <div class="stat-icon"><i class="fa-solid fa-door-open"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ open_challenges|length }}</div>
+            <div class="stat-label">Open Challenges Ready for Innovation</div>
+        </div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon"><i class="fa-solid fa-id-card"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ current_user.organization or 'Academic' }}</div>
+            <div class="stat-label">Affiliation</div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2 gap-3">
+    <!-- Open Challenges Needing Solutions -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-fire"></i> Verified Challenges Awaiting Solutions</h3>
+            <a href="{{ url_for('expert.challenges') }}" class="btn btn-outline btn-sm">Explore More</a>
+        </div>
+        <div class="card-body" style="padding: 16px;">
+            {% if open_challenges %}
+                <div class="problem-list">
+                    {% for p in open_challenges %}
+                        <div class="problem-item">
+                            <div class="problem-icon">{{ p.category_icon or '💡' }}</div>
+                            <div class="problem-info">
+                                <div class="problem-title">
+                                    <a href="{{ url_for('citizen.problem_details', problem_id=p.id) }}">{{ p.title }}</a>
+                                </div>
+                                <div class="problem-desc">{{ p.description }}</div>
+                                <div class="problem-meta">
+                                    <span><i class="fa-solid fa-location-dot"></i> {{ p.location }}</span>
+                                    <span>&bull;</span>
+                                    <span class="badge badge-verified">{{ p.category }}</span>
+                                    <span>&bull;</span>
+                                    <span>{{ p.solution_count or 0 }} solutions</span>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <a href="{{ url_for('expert.submit_solution', problem_id=p.id) }}" class="btn btn-saffron btn-sm">
+                                        <i class="fa-solid fa-pen-ruler"></i> Submit Solution
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No open challenges currently available.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- My Submitted Solutions -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-clipboard-check"></i> Your Proposed Solutions</h3>
+        </div>
+        <div class="card-body" style="padding: 16px;">
+            {% if my_solutions %}
+                <div class="problem-list">
+                    {% for s in my_solutions %}
+                        <div class="problem-item" {% if s.selected %}style="border-color: var(--green); background: #f0fdf4;"{% endif %}>
+                            <div class="problem-icon">
+                                {% if s.selected %}
+                                    <i class="fa-solid fa-medal text-green" style="font-size: 26px;"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-lightbulb text-saffron" style="font-size: 24px;"></i>
+                                {% endif %}
+                            </div>
+                            <div class="problem-info">
+                                <div class="problem-title">
+                                    <strong>{{ s.title }}</strong>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
+                                    For challenge: <a href="{{ url_for('citizen.problem_details', problem_id=s.problem_id) }}">{{ s.problem_title }}</a>
+                                </div>
+                                <div class="problem-desc">{{ s.description }}</div>
+                                <div class="problem-meta">
+                                    <span>Est. Cost: {{ s.estimated_cost or 'N/A' }}</span>
+                                    <span>&bull;</span>
+                                    <span>Time: {{ s.implementation_time or 'N/A' }}</span>
+                                    <span>&bull;</span>
+                                    <span><strong>{{ s.vote_count }}</strong> citizen votes</span>
+                                    {% if s.selected %}
+                                        <span>&bull;</span>
+                                        <span class="badge badge-completed"><i class="fa-solid fa-trophy"></i> Winning Solution</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                    <h3>No solutions submitted yet</h3>
+                    <p>Browse the verified societal challenges on the left and submit your innovation to make a real impact!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

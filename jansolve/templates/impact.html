@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Verified Ground Impact — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Ground Impact & Audit Outcomes</h1>
+        <p>Verified post-implementation metrics, beneficiary tracking, and quantitative societal improvement across Jharkhand.</p>
+    </div>
+</div>
+
+<!-- High-level Impact Metrics -->
+<div class="stats-grid">
+    <div class="stat-card green">
+        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_benefited }}</div>
+            <div class="stat-label">Total Citizens Directly Benefited</div>
+        </div>
+    </div>
+
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ avg_improvement }}%</div>
+            <div class="stat-label">Average Measurable Improvement</div>
+        </div>
+    </div>
+
+    <div class="stat-card saffron">
+        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ impact_cases|length }}</div>
+            <div class="stat-label">Fully Solved & Audited Challenges</div>
+        </div>
+    </div>
+</div>
+
+<!-- List of Impact Cases -->
+<div style="display: flex; flex-direction: column; gap: 24px;">
+    {% if impact_cases %}
+        {% for c in impact_cases %}
+        <div class="card" style="border: 2px solid var(--border); overflow: hidden;">
+            <div class="card-header flex justify-between items-center" style="background: var(--surface-alt);">
+                <div>
+                    <h3 style="font-size: 18px; margin: 0;">
+                        <a href="{{ url_for('citizen.problem_details', problem_id=c.problem_id) }}">{{ c.problem_title }}</a>
+                    </h3>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                        <i class="fa-solid fa-location-dot"></i> {{ c.location }} &bull; Category: {{ c.category }} &bull; Completed on {{ c.completion_date }}
+                    </div>
+                </div>
+                <div>
+                    <span class="badge badge-completed" style="font-size: 13px; padding: 6px 14px;">
+                        <i class="fa-solid fa-arrow-trend-up"></i> {{ c.improvement_percentage }}% Improved
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="grid grid-3 gap-2 mb-3 text-center">
+                    <div class="card card-body" style="background: #fef2f2; border: 1px solid #fecaca; padding: 16px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #991b1b; font-weight: 700;">Baseline (Before)</div>
+                        <div style="font-size: 26px; font-weight: 800; color: #ef4444; margin: 4px 0;">{{ c.before_value }}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">{{ c.before_metric }}</div>
+                    </div>
+
+                    <div class="card card-body" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 16px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: #166534; font-weight: 700;">Outcome (After)</div>
+                        <div style="font-size: 26px; font-weight: 800; color: var(--green); margin: 4px 0;">{{ c.after_value }}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">{{ c.after_metric }}</div>
+                    </div>
+
+                    <div class="card card-body" style="background: var(--green); color: white; padding: 16px;">
+                        <div style="font-size: 11px; text-transform: uppercase; color: rgba(255,255,255,0.8); font-weight: 700;">Quantitative Gain</div>
+                        <div style="font-size: 28px; font-weight: 900; color: white; margin: 4px 0;">{{ c.improvement_percentage }}%</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.9);">Verified Reduction</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-2 gap-2" style="background: var(--surface-alt); padding: 14px; border-radius: var(--radius); font-size: 13px;">
+                    <div><strong>Citizens Benefited:</strong> {{ c.people_benefited }} residents</div>
+                    <div><strong>Project Outlay:</strong> {{ c.implementation_cost }}</div>
+                </div>
+
+                {% if c.description %}
+                <p style="font-size: 14px; line-height: 1.7; color: var(--text-secondary); margin-top: 14px;">
+                    {{ c.description }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state card">
+            <div class="empty-icon"><i class="fa-solid fa-chart-simple"></i></div>
+            <h3>No impact cases recorded yet</h3>
+            <p>Once government departments complete ground implementations of selected solutions, verified audit metrics will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

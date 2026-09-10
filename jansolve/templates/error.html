@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ code }} — JanSolve{% endblock %}
+
+{% block public_layout %}
+<div class="error-page">
+    <div>
+        <div class="error-code">{{ code }}</div>
+        <h2>Oops! Something went wrong</h2>
+        <p>{{ message or "The page you are looking for doesn't exist or an unexpected error occurred." }}</p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i class="fa-solid fa-house"></i> Return to Homepage
+        </a>
+    </div>
+</div>
+{% endblock %}

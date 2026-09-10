@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block public_layout %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <a href="{{ url_for('main.index') }}" class="auth-logo">
+                <div class="logo-icon"><i class="fa-solid fa-landmark"></i></div>
+                <div class="logo-text">Jan<span>Solve</span></div>
+            </a>
+            <h2>Portal Sign In</h2>
+            <p>Access your role-based dashboard</p>
+        </div>
+
+        <div class="auth-body">
+            <form action="{{ url_for('auth.login') }}" method="POST">
+                <div class="form-group">
+                    <label for="email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" class="form-control" 
+                           placeholder="Enter registered email" value="{{ email or '' }}" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password <span class="required">*</span></label>
+                    <input type="password" id="password" name="password" class="form-control" 
+                           placeholder="Enter your password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>DEMO CREDENTIALS</span>
+            </div>
+
+            <!-- Quick Demo Credential Pills for Hackathon Judges -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('citizen@demo.com', 'citizen123')" style="font-size: 11px; padding: 6px;">
+                    <i class="fa-solid fa-user"></i> Citizen Demo
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('student@demo.com', 'student123')" style="font-size: 11px; padding: 6px;">
+                    <i class="fa-solid fa-graduation-cap"></i> Student/Expert
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('gov@demo.com', 'gov123')" style="font-size: 11px; padding: 6px;">
+                    <i class="fa-solid fa-building-columns"></i> Gov Official
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="fillDemo('admin@demo.com', 'admin123')" style="font-size: 11px; padding: 6px;">
+                    <i class="fa-solid fa-shield-halved"></i> Admin Demo
+                </button>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ url_for('auth.register') }}">Create an account</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillDemo(email, pass) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').value = pass;
+}
+</script>
+{% endblock %}

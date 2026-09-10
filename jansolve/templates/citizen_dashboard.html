@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Citizen Dashboard — JanSolve{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Welcome, {{ current_user.name }}</h1>
+        <p>Monitor your community complaints, track solution progress, and vote on civic proposals.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('citizen.report_problem') }}" class="btn btn-saffron btn-lg">
+            <i class="fa-solid fa-circle-plus"></i> Report New Problem
+        </a>
+    </div>
+</div>
+
+<!-- Citizen Stats -->
+<div class="stats-grid">
+    <div class="stat-card saffron">
+        <div class="stat-icon"><i class="fa-solid fa-bullhorn"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ total_reported }}</div>
+            <div class="stat-label">Problems Reported by You</div>
+        </div>
+    </div>
+
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ verified }}</div>
+            <div class="stat-label">Verified by Government</div>
+        </div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon"><i class="fa-solid fa-gears"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ in_progress }}</div>
+            <div class="stat-label">Under Active Solution</div>
+        </div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ solved }}</div>
+            <div class="stat-label">Resolved & Impact Audited</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-2 gap-3">
+    <!-- My Reported Issues -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-list-ul"></i> Your Reported Problems</h3>
+            <a href="{{ url_for('citizen.report_problem') }}" class="btn btn-outline btn-sm">
+                + Report New
+            </a>
+        </div>
+        <div class="card-body" style="padding: 16px;">
+            {% if my_problems %}
+                <div class="problem-list">
+                    {% for p in my_problems %}
+                        <div class="problem-item">
+                            <div class="problem-icon">{{ p.category_icon or '📋' }}</div>
+                            <div class="problem-info">
+                                <div class="problem-title">
+                                    <a href="{{ url_for('citizen.problem_details', problem_id=p.id) }}">{{ p.title }}</a>
+                                </div>
+                                <div class="problem-desc">{{ p.description }}</div>
+                                <div class="problem-meta">
+                                    <span><i class="fa-solid fa-location-dot"></i> {{ p.location }}</span>
+                                    <span>&bull;</span>
+                                    {% if p.status == 'REPORTED' %}
+                                        <span class="badge badge-reported">Reported</span>
+                                    {% elif p.status == 'VERIFIED' %}
+                                        <span class="badge badge-verified">Verified</span>
+                                    {% elif p.status == 'UNDER_REVIEW' %}
+                                        <span class="badge badge-review">Under Review</span>
+                                    {% elif p.status == 'SOLUTION_SELECTED' %}
+                                        <span class="badge badge-solution-selected">Solution Chosen</span>
+                                    {% elif p.status == 'IN_PROGRESS' %}
+                                        <span class="badge badge-progress">In Progress</span>
+                                    {% elif p.status == 'COMPLETED' %}
+                                        <span class="badge badge-completed">Completed</span>
+                                    {% else %}
+                                        <span class="badge badge-rejected">{{ p.status }}</span>
+                                    {% endif %}
+                                    <span>&bull;</span>
+                                    <span>{{ p.support_count }} supports</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <h3>No problems reported yet</h3>
+                    <p>Have you noticed any civic, water, or road issues in your area? Report it to get it verified and solved.</p>
+                    <a href="{{ url_for('citizen.report_problem') }}" class="btn btn-saffron btn-sm mt-2">
+                        Report First Problem
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Problems from Community -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-users"></i> Community Issues in Jharkhand</h3>
+            <a href="{{ url_for('citizen.browse_problems') }}" class="btn btn-outline btn-sm">
+                View All
+            </a>
+        </div>
+        <div class="card-body" style="padding: 16px;">
+            {% if recent_problems %}
+                <div class="problem-list">
+                    {% for p in recent_problems %}
+                        <div class="problem-item">
+                            <div class="problem-icon">{{ p.category_icon or '📋' }}</div>
+                            <div class="problem-info">
+                                <div class="problem-title">
+                                    <a href="{{ url_for('citizen.problem_details', problem_id=p.id) }}">{{ p.title }}</a>
+                                </div>
+                                <div class="problem-desc">{{ p.description }}</div>
+                                <div class="problem-meta">
+                                    <span>By {{ p.reporter_name }}</span>
+                                    <span>&bull;</span>
+                                    <span><i class="fa-solid fa-location-dot"></i> {{ p.location }}</span>
+                                    <span>&bull;</span>
+                                    <span class="badge badge-{{ p.priority|lower }}">{{ p.priority }} Priority</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No community problems found.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

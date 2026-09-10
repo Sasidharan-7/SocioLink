@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Report a Societal Problem — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Report a Societal Problem</h1>
+    <p>Submit a civic or infrastructural issue in Jharkhand. Our AI will automatically analyze category and priority.</p>
+</div>
+
+<div class="grid grid-2 gap-3" style="align-items: flex-start;">
+    <!-- Form Card -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-file-lines"></i> Problem Submission Form</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('citizen.report_problem') }}" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="title">Problem Title <span class="required">*</span></label>
+                    <input type="text" id="title" name="title" class="form-control" 
+                           placeholder="e.g. Garbage accumulating near village school" 
+                           value="{{ title or '' }}" required autofocus>
+                    <div class="form-hint">Brief, clear summary of the issue</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Detailed Description <span class="required">*</span></label>
+                    <textarea id="description" name="description" class="form-control" rows="5"
+                              placeholder="Describe the issue in detail: what happened, how long it has persisted, who is affected, and immediate hazards..." required>{{ description or '' }}</textarea>
+                    <div class="form-hint">Our NLP engine reads this text to extract category, severity, and key attributes</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location / Ward / District <span class="required">*</span></label>
+                    <input type="text" id="location" name="location" class="form-control" 
+                           placeholder="e.g. Sakchi Market, Jamshedpur or Kanke Road, Ranchi" 
+                           value="{{ location or '' }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category (Optional &bull; AI predicts automatically)</label>
+                    <select id="category" name="category" class="form-control">
+                        <option value="">-- Let AI Predict Category --</option>
+                        {% for c in categories %}
+                            <option value="{{ c.name }}">{{ c.icon }} {{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="image">Attach Photo Evidence (Optional)</label>
+                    <input type="file" id="image" name="image" class="form-control" accept="image/*">
+                    <div class="form-hint">Supported formats: JPG, PNG, WEBP (Max 16 MB)</div>
+                </div>
+
+                <button type="submit" class="btn btn-saffron btn-lg" style="width: 100%; margin-top: 10px;">
+                    <i class="fa-solid fa-paper-plane"></i> Analyze & Submit Problem
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- AI Feature Explainer Card for Judges -->
+    <div>
+        <div class="card mb-3" style="background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface) 100%); border-color: var(--primary-200);">
+            <div class="card-body">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <div class="stat-icon" style="background: var(--primary); color: white; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <h3 style="font-size: 16px; margin: 0;">Automated AI Pipeline</h3>
+                </div>
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 14px;">
+                    Upon submission, your complaint passes through 3 state-of-the-art NLP stages:
+                </p>
+                <ul style="font-size: 13px; color: var(--text-secondary); padding-left: 20px; line-height: 1.8;">
+                    <li><strong>NLP Categorization:</strong> TF-IDF vectorization & Naive Bayes model determines the administrative domain.</li>
+                    <li><strong>Priority Estimation:</strong> Evaluates public hazard keywords and urgency signals.</li>
+                    <li><strong>Duplicate Guard:</strong> Cosine similarity checks existing complaints to prevent duplicate overhead.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-lightbulb text-saffron"></i> Quick Demo Suggestions</h3>
+            </div>
+            <div class="card-body" style="font-size: 13px;">
+                <p style="color: var(--text-muted); margin-bottom: 10px;">Click to paste realistic demo text for SIH evaluation:</p>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button type="button" class="btn btn-outline btn-sm text-left" style="justify-content: flex-start;"
+                            onclick="fillDemoProblem('Garbage is accumulating near our village school and has not been collected for several days.', 'Waste has been piling up right outside the government primary school gate in Torpa Khunti. Stench is unbearable, stray dogs are roaming, and young students are unable to attend morning assemblies safely. Municipal sanitation truck has not arrived for over a week.', 'Torpa, Khunti')">
+                        <i class="fa-solid fa-trash-can"></i> Sanitation: Garbage near village school
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm text-left" style="justify-content: flex-start;"
+                            onclick="fillDemoProblem('Severe drinking water contamination in Namkum block', 'The piped drinking water supplied by municipal board to Namkum block residents is dark yellow with pungent smell. Three children were hospitalized with severe gastroenteritis yesterday. Needs emergency water quality inspection and mobile filtration.', 'Namkum, Ranchi')">
+                        <i class="fa-solid fa-droplet"></i> Water: Contaminated supply
+                    </button>
+                    <button type="button" class="btn btn-outline btn-sm text-left" style="justify-content: flex-start;"
+                            onclick="fillDemoProblem('Dangerous crater potholes near Birsa Munda Airport road', 'Multiple deep potholes spanning half the road width have formed on the main airport access road near Hinoo. Two two-wheelers suffered fatal skids during evening drizzle.', 'Hinoo, Ranchi')">
+                        <i class="fa-solid fa-road"></i> Roads: Airport arterial road damage
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function fillDemoProblem(title, desc, loc) {
+    document.getElementById('title').value = title;
+    document.getElementById('description').value = desc;
+    document.getElementById('location').value = loc;
+}
+</script>
+{% endblock %}

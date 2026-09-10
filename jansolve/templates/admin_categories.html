@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Problem Categories — JanSolve Admin{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            <a href="{{ url_for('admin.dashboard') }}">&larr; Back to Admin Console</a>
+        </div>
+        <h1>Problem Categories Taxonomy</h1>
+        <p>Define and maintain administrative categories used by AI classification and government line departments.</p>
+    </div>
+</div>
+
+<div class="grid grid-3 gap-3" style="align-items: flex-start;">
+    <!-- Categories Table (2 cols) -->
+    <div style="grid-column: span 2;">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-tags"></i> Active Problem Categories ({{ categories|length }})</h3>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Icon</th>
+                                <th>Category Name</th>
+                                <th>Description / Scope</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in categories %}
+                            <tr>
+                                <td style="font-size: 24px; text-align: center;">{{ c.icon }}</td>
+                                <td><strong>{{ c.name }}</strong></td>
+                                <td style="font-size: 13px; color: var(--text-secondary);">{{ c.description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Form (1 col) -->
+    <div>
+        <div class="card">
+            <div class="card-header" style="background: var(--primary-50);">
+                <h3 style="color: var(--primary);"><i class="fa-solid fa-plus"></i> Add New Category</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('admin.categories_list') }}" method="POST">
+                    <div class="form-group">
+                        <label for="name">Category Name <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" class="form-control" 
+                               placeholder="e.g. Renewable Energy" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="icon">Emoji Icon</label>
+                        <input type="text" id="icon" name="icon" class="form-control" 
+                               placeholder="e.g. ☀️ or 🌲" value="📋">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Scope / Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3"
+                                  placeholder="Define the types of societal problems under this domain..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fa-solid fa-plus"></i> Create Category
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

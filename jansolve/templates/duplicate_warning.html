@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Similar Problem Detected — JanSolve AI Duplicate Detection{% endblock %}
+
+{% block content %}
+<div class="page-header" style="text-align: center; max-width: 800px; margin: 0 auto 30px;">
+    <div style="width: 60px; height: 60px; background: #fff3e0; color: var(--saffron); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px;">
+        <i class="fa-solid fa-clone"></i>
+    </div>
+    <h1 style="color: #9a3412;">Similar Problem Found!</h1>
+    <p>Our NLP Cosine Similarity engine detected one or more existing civic complaints matching your issue. Supporting an existing problem increases its priority in the government queue.</p>
+</div>
+
+<div style="max-width: 840px; margin: 0 auto;">
+    <!-- New submission preview card -->
+    <div class="card mb-3" style="border-left: 4px solid var(--primary);">
+        <div class="card-header" style="background: var(--primary-50);">
+            <h3 style="color: var(--primary);"><i class="fa-solid fa-pen"></i> Your New Submission</h3>
+            <span class="badge badge-verified">AI Category: {{ ai_res.category }}</span>
+        </div>
+        <div class="card-body">
+            <h4>{{ new_title }}</h4>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-top: 6px;">{{ new_description }}</p>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                <i class="fa-solid fa-location-dot"></i> {{ new_location }} &bull; AI Confidence: {{ (ai_res.confidence * 100)|int }}% &bull; Priority: {{ ai_res.priority }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing Similar Matches -->
+    <h3 style="font-size: 18px; margin: 24px 0 12px;">Existing Similar Complaints:</h3>
+
+    {% for m in similar_matches %}
+    <div class="card mb-3" style="border: 2px solid {% if m.similarity_percent >= 80 %}#fca5a5{% else %}#fed7aa{% endif %};">
+        <div class="card-header flex justify-between items-center" style="background: {% if m.similarity_percent >= 80 %}#fef2f2{% else %}#fffbeb{% endif %};">
+            <div>
+                <span class="badge badge-high" style="font-size: 13px;">
+                    <i class="fa-solid fa-bolt"></i> {{ m.similarity_percent }}% Similarity Match
+                </span>
+                <span style="font-size: 12px; color: var(--text-muted); margin-left: 8px;">
+                    Status: <strong class="badge badge-{{ m.status|lower|replace('_', '-') }}">{{ m.status|replace('_', ' ') }}</strong>
+                </span>
+            </div>
+            <div>
+                <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">
+                    <i class="fa-solid fa-thumbs-up text-saffron"></i> {{ m.support_count }} Supporters
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            <h4 style="font-size: 16px;">{{ m.title }}</h4>
+            <p style="font-size: 14px; color: var(--text-secondary); margin-top: 6px;">{{ m.description }}</p>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                <i class="fa-solid fa-location-dot"></i> {{ m.location }}
+            </div>
+
+            <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <!-- Button 1: Support Existing Problem -->
+                <form action="{{ url_for('citizen.support_problem', problem_id=m.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-saffron">
+                        <i class="fa-solid fa-thumbs-up"></i> Support Existing Problem (Recommended)
+                    </button>
+                </form>
+
+                <!-- View details of existing -->
+                <a href="{{ url_for('citizen.problem_details', problem_id=m.id) }}" target="_blank" class="btn btn-outline">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> View Existing Complaint Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Button 2: Submit as New Problem Anyway -->
+    <div class="card text-center" style="padding: 24px; background: var(--surface-alt); margin-top: 24px;">
+        <h4>Still want to submit this as a separate complaint?</h4>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+            If your problem is distinctly different from the ones above, you can proceed with a new registration.
+        </p>
+        <form action="{{ url_for('citizen.report_problem') }}" method="POST">
+            <input type="hidden" name="title" value="{{ new_title }}">
+            <input type="hidden" name="description" value="{{ new_description }}">
+            <input type="hidden" name="location" value="{{ new_location }}">
+            <input type="hidden" name="category" value="{{ new_category }}">
+            <input type="hidden" name="force_submit" value="1">
+            <button type="submit" class="btn btn-outline">
+                <i class="fa-solid fa-check"></i> Submit as New Problem
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

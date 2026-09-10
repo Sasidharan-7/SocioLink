@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Gov Review: {{ problem.title }} — JanSolve{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            <a href="{{ url_for('government.problem_list') }}">&larr; Back to Problem Queue</a> &bull; Official Review Console
+        </div>
+        <h1>{{ problem.title }}</h1>
+        <div class="flex items-center gap-2 mt-1" style="font-size: 13px; color: var(--text-secondary);">
+            <span>Reported by <strong>{{ problem.reporter_name }}</strong> ({{ problem.reporter_email }})</span>
+            <span>&bull;</span>
+            <span><i class="fa-solid fa-location-dot"></i> {{ problem.location }}</span>
+            <span>&bull;</span>
+            <span>Status: <strong class="badge badge-{{ problem.status|lower|replace('_', '-') }}">{{ problem.status|replace('_', ' ') }}</strong></span>
+        </div>
+    </div>
+
+    <!-- Quick Action Bar -->
+    <div class="flex items-center gap-2">
+        {% if problem.status == 'REPORTED' %}
+            <form action="{{ url_for('government.view_problem', problem_id=problem.id) }}" method="POST" style="display: inline;">
+                <input type="hidden" name="action" value="verify">
+                <button type="submit" class="btn btn-green">
+                    <i class="fa-solid fa-stamp"></i> Officially Verify Problem
+                </button>
+            </form>
+            <form action="{{ url_for('government.view_problem', problem_id=problem.id) }}" method="POST" style="display: inline;">
+                <input type="hidden" name="action" value="reject">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Reject this problem?');">
+                    <i class="fa-solid fa-xmark"></i> Reject
+                </button>
+            </form>
+        {% elif problem.status == 'SOLUTION_SELECTED' %}
+            <form action="{{ url_for('government.start_implementation', problem_id=problem.id) }}" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-saffron">
+                    <i class="fa-solid fa-gears"></i> Move to IN PROGRESS
+                </button>
+            </form>
+        {% elif problem.status == 'IN_PROGRESS' %}
+            <a href="{{ url_for('government.record_impact', problem_id=problem.id) }}" class="btn btn-green">
+                <i class="fa-solid fa-circle-check"></i> Mark Completed & Enter Impact
+            </a>
+        {% elif problem.status == 'COMPLETED' %}
+            <a href="{{ url_for('government.record_impact', problem_id=problem.id) }}" class="btn btn-outline btn-sm">
+                <i class="fa-solid fa-pen-to-square"></i> Edit Impact Metrics
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-3 gap-3" style="align-items: flex-start;">
+    <!-- Left 2 Cols: Details, Solutions & Comparison -->
+    <div style="grid-column: span 2;">
+        <!-- Narrative Card -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-align-left"></i> Citizen Complaint Details</h3>
+            </div>
+            <div class="card-body">
+                <p style="font-size: 15px; line-height: 1.8;">{{ problem.description }}</p>
+
+                {% if problem.image_path %}
+                <div style="margin-top: 16px;">
+                    <img src="{{ url_for('static', filename='uploads/' + problem.image_path) }}" 
+                         alt="Problem Evidence" 
+                         style="max-height: 320px; border-radius: var(--radius); border: 1px solid var(--border);">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- AI Expert & Academic Institution Matching (Module 6) -->
+        <div class="card mb-3" style="border: 2px solid var(--primary-200); background: #f8faff;">
+            <div class="card-header" style="background: var(--primary-50);">
+                <div>
+                    <h3 style="color: var(--primary); margin: 0;">
+                        <i class="fa-solid fa-brain"></i> AI Recommended Academic & Domain Collaborators
+                    </h3>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                        TF-IDF & Cosine Similarity Match against faculty skills & research centres in Jharkhand
+                    </div>
+                </div>
+                <span class="badge badge-verified">Module 6</span>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+                <div class="grid grid-2 gap-2">
+                    {% for exp in recommended_experts %}
+                    <div class="card" style="padding: 16px; border: 1px solid var(--border); background: var(--surface);">
+                        <div class="flex justify-between items-center mb-1">
+                            <strong style="font-size: 15px; color: var(--text);">{{ exp.name }}</strong>
+                            <span class="badge {% if exp.match_percent >= 85 %}badge-completed{% elif exp.match_percent >= 70 %}badge-verified{% else %}badge-review{% endif %}" style="font-size: 12px;">
+                                <i class="fa-solid fa-bullseye"></i> {{ exp.match_percent }}% Match
+                            </span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--primary); font-weight: 600;">
+                            <i class="fa-solid fa-building-columns"></i> {{ exp.organization }}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                            Dept: {{ exp.department }}
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+                            <strong>Skills:</strong> {{ exp.skills }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposed Solutions & Official Selection (Module 7) -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-trophy text-saffron"></i> Proposed Solutions Evaluation ({{ solutions|length }})</h3>
+            </div>
+            <div class="card-body" style="padding: 16px;">
+                {% if solutions %}
+                    <div class="problem-list">
+                        {% for s in solutions %}
+                        <div class="problem-item" style="padding: 20px; border-radius: var(--radius); 
+                             {% if s.selected %}border: 2px solid var(--green); background: #f0fdf4;{% else %}border: 1px solid var(--border);{% endif %}">
+                            <div class="problem-info">
+                                <div class="flex justify-between items-center flex-wrap gap-1">
+                                    <h4 style="font-size: 17px; margin: 0;">{{ s.title }}</h4>
+                                    {% if s.selected %}
+                                        <span class="badge badge-completed"><i class="fa-solid fa-check-double"></i> Selected Solution</span>
+                                    {% else %}
+                                        <form action="{{ url_for('government.select_solution', solution_id=s.id) }}" method="POST">
+                                            <button type="submit" class="btn btn-green btn-sm">
+                                                <i class="fa-solid fa-award"></i> Select as Winner
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+
+                                <div style="font-size: 13px; color: var(--text-muted); margin: 4px 0 10px;">
+                                    Proposed by <strong>{{ s.author_name }}</strong> &bull; {{ s.author_org or 'Innovator' }} ({{ s.author_email }})
+                                </div>
+
+                                <p style="font-size: 14px; line-height: 1.7; color: var(--text-secondary);">{{ s.description }}</p>
+
+                                <div class="grid grid-3 gap-1 mb-2 mt-2" style="background: rgba(0,0,0,0.02); padding: 10px; border-radius: 6px; font-size: 12px;">
+                                    <div><strong>Cost:</strong> {{ s.estimated_cost or 'N/A' }}</div>
+                                    <div><strong>Timeline:</strong> {{ s.implementation_time or 'N/A' }}</div>
+                                    <div><strong>Impact:</strong> {{ s.expected_impact or 'High' }}</div>
+                                </div>
+
+                                <div class="flex items-center gap-3" style="font-size: 13px; margin-top: 10px;">
+                                    <span><strong>{{ s.vote_count }}</strong> Citizen Votes</span>
+                                    <span>&bull;</span>
+                                    <span>Feasibility: <strong>{{ s.feasibility_score or 7.0 }}/10</strong></span>
+                                    <span>&bull;</span>
+                                    <span>Impact: <strong>{{ s.impact_score or 7.5 }}/10</strong></span>
+                                    <span>&bull;</span>
+                                    <span class="badge badge-verified">Weighted Score: {{ s.overall_score or 7.2 }}/10</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No solutions submitted yet for this problem.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Verified Impact Metrics Display (if recorded) -->
+        {% if impact %}
+        <div class="card mb-3" style="border: 2px solid var(--green);">
+            <div class="card-header" style="background: #dcfce7;">
+                <h3 style="color: var(--green);"><i class="fa-solid fa-chart-line"></i> Published Ground Impact Audit</h3>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-3 gap-2 mb-2 text-center">
+                    <div class="card card-body">
+                        <div style="font-size: 11px; color: var(--text-muted);">BEFORE</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #ef4444;">{{ impact.before_value }}</div>
+                        <div style="font-size: 12px;">{{ impact.before_metric }}</div>
+                    </div>
+                    <div class="card card-body">
+                        <div style="font-size: 11px; color: var(--text-muted);">AFTER</div>
+                        <div style="font-size: 22px; font-weight: 800; color: var(--green);">{{ impact.after_value }}</div>
+                        <div style="font-size: 12px;">{{ impact.after_metric }}</div>
+                    </div>
+                    <div class="card card-body" style="background: var(--green); color: white;">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.8);">IMPROVEMENT</div>
+                        <div style="font-size: 26px; font-weight: 900;">{{ impact.improvement_percentage }}%</div>
+                    </div>
+                </div>
+                <div style="font-size: 13px; margin-top: 10px;">
+                    <strong>People Benefited:</strong> {{ impact.people_benefited }} citizens &bull; 
+                    <strong>Cost:</strong> {{ impact.implementation_cost }} &bull; 
+                    <strong>Completed:</strong> {{ impact.completion_date }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Col: Administrative Status & Department Routing Form -->
+    <div>
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-gears"></i> Governance Controls</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('government.view_problem', problem_id=problem.id) }}" method="POST">
+                    <input type="hidden" name="action" value="update_meta">
+
+                    <div class="form-group">
+                        <label for="status">Workflow Status</label>
+                        <select name="status" id="status" class="form-control">
+                            <option value="REPORTED" {% if problem.status == 'REPORTED' %}selected{% endif %}>REPORTED</option>
+                            <option value="VERIFIED" {% if problem.status == 'VERIFIED' %}selected{% endif %}>VERIFIED</option>
+                            <option value="UNDER_REVIEW" {% if problem.status == 'UNDER_REVIEW' %}selected{% endif %}>UNDER REVIEW</option>
+                            <option value="SOLUTION_SELECTED" {% if problem.status == 'SOLUTION_SELECTED' %}selected{% endif %}>SOLUTION SELECTED</option>
+                            <option value="IN_PROGRESS" {% if problem.status == 'IN_PROGRESS' %}selected{% endif %}>IN PROGRESS</option>
+                            <option value="COMPLETED" {% if problem.status == 'COMPLETED' %}selected{% endif %}>COMPLETED</option>
+                            <option value="REJECTED" {% if problem.status == 'REJECTED' %}selected{% endif %}>REJECTED</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priority">Priority Level</label>
+                        <select name="priority" id="priority" class="form-control">
+                            <option value="HIGH" {% if problem.priority == 'HIGH' %}selected{% endif %}>HIGH Priority</option>
+                            <option value="MEDIUM" {% if problem.priority == 'MEDIUM' %}selected{% endif %}>MEDIUM Priority</option>
+                            <option value="LOW" {% if problem.priority == 'LOW' %}selected{% endif %}>LOW Priority</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="department_id">Assign Line Department</label>
+                        <select name="department_id" id="department_id" class="form-control">
+                            <option value="">-- Select Department --</option>
+                            {% for d in departments %}
+                                <option value="{{ d.id }}" {% if problem.department_id == d.id %}selected{% endif %}>
+                                    {{ d.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <i class="fa-solid fa-floppy-disk"></i> Update Administrative Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- AI Categorization Metadata Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-robot"></i> NLP Prediction Details</h3>
+            </div>
+            <div class="card-body" style="font-size: 13px;">
+                <div class="mb-2"><strong>AI Category:</strong> {{ problem.ai_category or problem.category }}</div>
+                <div class="mb-2"><strong>AI Subcategory:</strong> {{ problem.ai_sub_category or 'N/A' }}</div>
+                <div class="mb-2"><strong>AI Urgency:</strong> {{ problem.ai_priority or problem.priority }}</div>
+                <div><strong>Confidence:</strong> {{ ((problem.ai_confidence or 0.90) * 100)|int }}%</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

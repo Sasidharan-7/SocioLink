@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Civic Complaints — JanSolve | Govt of Jharkhand{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>All Reported Societal Problems</h1>
+        <p>Triage complaints, assign line departments, and monitor solution lifecycles.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('government.dashboard') }}" class="btn btn-outline">
+            &larr; Back to Command Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="card mb-3" style="padding: 16px 20px;">
+    <form action="{{ url_for('government.problem_list') }}" method="GET" class="grid grid-4 gap-2" style="align-items: flex-end;">
+        <div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Status Filter</label>
+            <select name="status" class="form-control">
+                <option value="">All Statuses</option>
+                <option value="REPORTED" {% if status_filter == 'REPORTED' %}selected{% endif %}>Reported (Unverified)</option>
+                <option value="VERIFIED" {% if status_filter == 'VERIFIED' %}selected{% endif %}>Verified</option>
+                <option value="UNDER_REVIEW" {% if status_filter == 'UNDER_REVIEW' %}selected{% endif %}>Under Review</option>
+                <option value="SOLUTION_SELECTED" {% if status_filter == 'SOLUTION_SELECTED' %}selected{% endif %}>Solution Selected</option>
+                <option value="IN_PROGRESS" {% if status_filter == 'IN_PROGRESS' %}selected{% endif %}>In Progress</option>
+                <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                <option value="REJECTED" {% if status_filter == 'REJECTED' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Domain Category</label>
+            <select name="category" class="form-control">
+                <option value="">All Categories</option>
+                {% for c in categories %}
+                    <option value="{{ c.name }}" {% if category_filter == c.name %}selected{% endif %}>{{ c.icon }} {{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Urgency Priority</label>
+            <select name="priority" class="form-control">
+                <option value="">All Priorities</option>
+                <option value="HIGH" {% if priority_filter == 'HIGH' %}selected{% endif %}>HIGH Priority</option>
+                <option value="MEDIUM" {% if priority_filter == 'MEDIUM' %}selected{% endif %}>MEDIUM Priority</option>
+                <option value="LOW" {% if priority_filter == 'LOW' %}selected{% endif %}>LOW Priority</option>
+            </select>
+        </div>
+
+        <div class="flex gap-1">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <i class="fa-solid fa-filter"></i> Apply
+            </button>
+            <a href="{{ url_for('government.problem_list') }}" class="btn btn-outline" title="Reset">
+                <i class="fa-solid fa-rotate-left"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Problems Table -->
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Problem Summary</th>
+                        <th>Location</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Solutions</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if problems %}
+                        {% for p in problems %}
+                        <tr {% if p.status == 'REPORTED' %}style="background: #fffbeb;"{% endif %}>
+                            <td>#{{ p.id }}</td>
+                            <td>
+                                <strong>{{ p.title }}</strong>
+                                <div style="font-size: 12px; color: var(--text-muted); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                    {{ p.description }}
+                                </div>
+                            </td>
+                            <td><i class="fa-solid fa-location-dot"></i> {{ p.location }}</td>
+                            <td>{{ p.category }}</td>
+                            <td>
+                                <span class="badge badge-{{ p.priority|lower }}">{{ p.priority }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ p.status|lower|replace('_', '-') }}">{{ p.status|replace('_', ' ') }}</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="badge badge-verified">{{ p.solution_count }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('government.view_problem', problem_id=p.id) }}" class="btn btn-primary btn-sm">
+                                    Manage &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center" style="padding: 40px; color: var(--text-muted);">
+                                No problems found matching the selected filter.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

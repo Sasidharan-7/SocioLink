@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Console — JanSolve{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1>Platform Administration</h1>
+        <p>JanSolve System Governance, User Registry & Category Taxonomies</p>
+    </div>
+</div>
+
+<!-- Admin Global Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.total_users }}</div>
+            <div class="stat-label">Registered Accounts</div>
+        </div>
+    </div>
+
+    <div class="stat-card saffron">
+        <div class="stat-icon"><i class="fa-solid fa-person"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.total_citizens }}</div>
+            <div class="stat-label">Active Citizens</div>
+        </div>
+    </div>
+
+    <div class="stat-card purple">
+        <div class="stat-icon"><i class="fa-solid fa-user-graduate"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.total_students }}</div>
+            <div class="stat-label">Students / Innovators</div>
+        </div>
+    </div>
+
+    <div class="stat-card green">
+        <div class="stat-icon"><i class="fa-solid fa-building-columns"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.total_gov }}</div>
+            <div class="stat-label">Gov Officials</div>
+        </div>
+    </div>
+
+    <div class="stat-card teal">
+        <div class="stat-icon"><i class="fa-solid fa-bullhorn"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.total_problems }}</div>
+            <div class="stat-label">Total Problems</div>
+        </div>
+    </div>
+
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="fa-solid fa-lightbulb"></i></div>
+        <div class="stat-info">
+            <div class="stat-value">{{ stats.total_solutions }}</div>
+            <div class="stat-label">Total Solutions</div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-2 gap-3">
+    <!-- User Registry Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-users-gear"></i> Recent Registered Users</h3>
+            <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline btn-sm">Full Directory</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in recent_users %}
+                        <tr>
+                            <td><strong>{{ u.name }}</strong></td>
+                            <td>{{ u.email }}</td>
+                            <td>
+                                <span class="badge badge-{{ u.role }}">{{ u.role }}</span>
+                            </td>
+                            <td style="font-size: 12px; color: var(--text-muted);">
+                                {{ u.created_at[:10] if u.created_at else '' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Problem Categories -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-tags"></i> Administrative Categories</h3>
+            <a href="{{ url_for('admin.categories_list') }}" class="btn btn-outline btn-sm">Manage</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Icon</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr>
+                            <td><strong>{{ c.name }}</strong></td>
+                            <td style="font-size: 20px;">{{ c.icon }}</td>
+                            <td style="font-size: 12px; color: var(--text-secondary);">{{ c.description }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}User Directory — JanSolve Admin{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            <a href="{{ url_for('admin.dashboard') }}">&larr; Back to Admin Console</a>
+        </div>
+        <h1>Platform User Directory</h1>
+        <p>Manage accounts, oversee role assignments, and review credentials.</p>
+    </div>
+</div>
+
+<!-- Role filter bar -->
+<div class="card mb-3" style="padding: 12px 20px;">
+    <div class="flex items-center gap-2 flex-wrap">
+        <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Filter by Role:</span>
+        <a href="{{ url_for('admin.users_list') }}" class="btn btn-sm {% if not role_filter %}btn-primary{% else %}btn-outline{% endif %}">All Users</a>
+        <a href="{{ url_for('admin.users_list', role='citizen') }}" class="btn btn-sm {% if role_filter == 'citizen' %}btn-primary{% else %}btn-outline{% endif %}">Citizens</a>
+        <a href="{{ url_for('admin.users_list', role='student') }}" class="btn btn-sm {% if role_filter == 'student' %}btn-primary{% else %}btn-outline{% endif %}">Students/Experts</a>
+        <a href="{{ url_for('admin.users_list', role='government') }}" class="btn btn-sm {% if role_filter == 'government' %}btn-primary{% else %}btn-outline{% endif %}">Gov Officials</a>
+        <a href="{{ url_for('admin.users_list', role='admin') }}" class="btn btn-sm {% if role_filter == 'admin' %}btn-primary{% else %}btn-outline{% endif %}">Administrators</a>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-body" style="padding: 0;">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Organization</th>
+                        <th>Current Role</th>
+                        <th>Change Role</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>#{{ u.id }}</td>
+                        <td>
+                            <strong>{{ u.name }}</strong>
+                            {% if u.phone %}
+                                <div style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ u.phone }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.organization or '—' }}</td>
+                        <td>
+                            <span class="badge badge-{{ u.role }}">{{ u.role }}</span>
+                        </td>
+                        <td>
+                            <form action="{{ url_for('admin.change_user_role', user_id=u.id) }}" method="POST" class="flex items-center gap-1">
+                                <select name="role" class="form-control" style="padding: 4px 8px; font-size: 12px; width: auto;">
+                                    <option value="citizen" {% if u.role == 'citizen' %}selected{% endif %}>Citizen</option>
+                                    <option value="student" {% if u.role == 'student' %}selected{% endif %}>Student/Expert</option>
+                                    <option value="government" {% if u.role == 'government' %}selected{% endif %}>Government</option>
+                                    <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                                </select>
+                                <button type="submit" class="btn btn-outline btn-sm" style="padding: 4px 8px;">
+                                    Update
+                                </button>
+                            </form>
+                        </td>
+                        <td style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">
+                            {{ u.created_at[:10] if u.created_at else '' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

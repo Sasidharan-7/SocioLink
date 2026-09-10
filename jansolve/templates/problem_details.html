@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}{{ problem.title }} — JanSolve{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">
+            <a href="{{ url_for('citizen.browse_problems') }}">&larr; Back to all challenges</a>
+            &bull; Challenge #{{ problem.id }}
+        </div>
+        <h1>{{ problem.title }}</h1>
+        <div class="flex items-center gap-2 mt-1" style="font-size: 13px; color: var(--text-secondary);">
+            <span><i class="fa-solid fa-user"></i> Reported by <strong>{{ problem.reporter_name }}</strong></span>
+            <span>&bull;</span>
+            <span><i class="fa-solid fa-location-dot"></i> {{ problem.location }}</span>
+            <span>&bull;</span>
+            <span><i class="fa-regular fa-calendar"></i> {{ problem.created_at[:10] if problem.created_at else '' }}</span>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        {% if current_user and current_user.role == 'citizen' %}
+            <form action="{{ url_for('citizen.support_problem', problem_id=problem.id) }}" method="POST">
+                <button type="submit" class="btn {% if has_supported %}btn-green{% else %}btn-saffron{% endif %}" {% if has_supported %}disabled{% endif %}>
+                    <i class="fa-solid fa-thumbs-up"></i> 
+                    {% if has_supported %}Supported ({{ problem.support_count }}){% else %}Support Problem ({{ problem.support_count }}){% endif %}
+                </button>
+            </form>
+        {% elif not current_user %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline">
+                <i class="fa-solid fa-thumbs-up"></i> Support ({{ problem.support_count }})
+            </a>
+        {% endif %}
+
+        {% if current_user and current_user.role == 'student' and problem.status in ('VERIFIED', 'UNDER_REVIEW') %}
+            <a href="{{ url_for('expert.submit_solution', problem_id=problem.id) }}" class="btn btn-primary">
+                <i class="fa-solid fa-pen-ruler"></i> Submit Solution
+            </a>
+        {% endif %}
+
+        {% if current_user and current_user.role == 'government' %}
+            <a href="{{ url_for('government.view_problem', problem_id=problem.id) }}" class="btn btn-primary">
+                <i class="fa-solid fa-sliders"></i> Manage in Gov Console
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Problem Lifecycle Tracker Bar -->
+<div class="card mb-3" style="padding: 18px 24px; background: var(--surface);">
+    <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+        {% set steps = [
+            ('REPORTED', 'Reported', 'fa-bullhorn'),
+            ('VERIFIED', 'Verified', 'fa-stamp'),
+            ('UNDER_REVIEW', 'Under Review', 'fa-magnifying-glass'),
+            ('SOLUTION_SELECTED', 'Solution Chosen', 'fa-award'),
+            ('IN_PROGRESS', 'In Progress', 'fa-gears'),
+            ('COMPLETED', 'Completed', 'fa-circle-check')
+        ] %}
+        
+        {% set status_order = {
+            'REPORTED': 1, 'VERIFIED': 2, 'UNDER_REVIEW': 3, 
+            'SOLUTION_SELECTED': 4, 'IN_PROGRESS': 5, 'COMPLETED': 6, 'REJECTED': 0
+        } %}
+        {% set curr_order = status_order.get(problem.status, 1) %}
+
+        {% for s_code, s_label, s_icon in steps %}
+            {% set step_idx = loop.index %}
+            <div style="text-align: center; z-index: 2; flex: 1;">
+                <div style="width: 38px; height: 38px; margin: 0 auto 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; 
+                            {% if step_idx <= curr_order %}background: var(--primary); color: white; box-shadow: 0 0 0 4px var(--primary-50);
+                            {% else %}background: var(--bg); color: var(--text-muted); border: 2px solid var(--border);{% endif %}">
+                    <i class="fa-solid {{ s_icon }}"></i>
+                </div>
+                <div style="font-size: 11px; font-weight: 600; {% if step_idx <= curr_order %}color: var(--primary);{% else %}color: var(--text-muted);{% endif %}">
+                    {{ s_label }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="grid grid-3 gap-3" style="align-items: flex-start;">
+    <!-- Main Left: Description & Solutions (2 columns) -->
+    <div style="grid-column: span 2;">
+        <!-- Detailed Description Card -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-align-left"></i> Problem Narrative</h3>
+                <span class="badge badge-{{ problem.status|lower|replace('_', '-') }}">{{ problem.status|replace('_', ' ') }}</span>
+            </div>
+            <div class="card-body">
+                <p style="font-size: 15px; line-height: 1.8; color: var(--text);">{{ problem.description }}</p>
+
+                {% if problem.image_path %}
+                <div style="margin-top: 20px;">
+                    <h4 style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                        <i class="fa-solid fa-camera"></i> Attached Ground Photo Evidence:
+                    </h4>
+                    <img src="{{ url_for('static', filename='uploads/' + problem.image_path) }}" 
+                         alt="Problem Evidence" 
+                         style="max-height: 380px; border-radius: var(--radius); border: 1px solid var(--border); object-fit: cover;">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Solutions Section -->
+        <div class="card mb-3">
+            <div class="card-header flex justify-between items-center">
+                <div>
+                    <h3 style="margin: 0;"><i class="fa-solid fa-lightbulb text-saffron"></i> Collaborative Solutions ({{ solutions|length }})</h3>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                        Ranking Formula: Public Voting (40%) + Feasibility (30%) + Ground Impact (30%)
+                    </div>
+                </div>
+                {% if current_user and current_user.role == 'student' %}
+                    <a href="{{ url_for('expert.submit_solution', problem_id=problem.id) }}" class="btn btn-saffron btn-sm">
+                        + Propose Solution
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body" style="padding: 16px;">
+                {% if solutions %}
+                    <div class="problem-list">
+                        {% for s in solutions %}
+                        <div class="problem-item" style="border-radius: var(--radius); padding: 20px; 
+                             {% if s.selected %}border: 2px solid var(--green); background: #f0fdf4;{% else %}border: 1px solid var(--border);{% endif %}">
+                            <div class="problem-icon">
+                                {% if s.selected %}
+                                    <div style="width: 44px; height: 44px; background: #dcfce7; color: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                                        <i class="fa-solid fa-medal"></i>
+                                    </div>
+                                {% else %}
+                                    <div style="width: 44px; height: 44px; background: var(--primary-50); color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                        #{{ loop.index }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="problem-info">
+                                <div class="flex justify-between items-center flex-wrap gap-1">
+                                    <h4 style="font-size: 17px; margin: 0; color: var(--text);">{{ s.title }}</h4>
+                                    {% if s.selected %}
+                                        <span class="badge badge-completed"><i class="fa-solid fa-award"></i> Selected for Execution</span>
+                                    {% endif %}
+                                </div>
+
+                                <div style="font-size: 13px; color: var(--text-muted); margin: 4px 0 10px;">
+                                    By <strong>{{ s.author_name }}</strong> &bull; {{ s.author_org or 'Innovator' }}
+                                </div>
+
+                                <p style="font-size: 14px; line-height: 1.7; color: var(--text-secondary); margin-bottom: 14px;">
+                                    {{ s.description }}
+                                </p>
+
+                                <!-- Technical Estimates Grid -->
+                                <div class="grid grid-3 gap-1 mb-2" style="background: rgba(0,0,0,0.02); padding: 12px; border-radius: 8px; font-size: 12px;">
+                                    <div><strong><i class="fa-solid fa-indian-rupee-sign"></i> Est. Cost:</strong> {{ s.estimated_cost or 'N/A' }}</div>
+                                    <div><strong><i class="fa-regular fa-clock"></i> Time:</strong> {{ s.implementation_time or 'N/A' }}</div>
+                                    <div><strong><i class="fa-solid fa-users"></i> Impact:</strong> {{ s.expected_impact or 'High' }}</div>
+                                </div>
+
+                                {% if s.required_resources %}
+                                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+                                    <strong>Required Resources:</strong> {{ s.required_resources }}
+                                </div>
+                                {% endif %}
+
+                                <!-- Score Breakdown & Voting Bar -->
+                                <div class="flex justify-between items-center flex-wrap gap-2" style="padding-top: 12px; border-top: 1px solid var(--border-light);">
+                                    <div class="flex items-center gap-3" style="font-size: 13px;">
+                                        <span><i class="fa-solid fa-check-to-slot text-primary"></i> <strong>{{ s.vote_count }}</strong> Citizen Votes</span>
+                                        <span>&bull;</span>
+                                        <span>Feasibility: <strong>{{ s.feasibility_score or 7.0 }}/10</strong></span>
+                                        <span>&bull;</span>
+                                        <span>Impact: <strong>{{ s.impact_score or 7.5 }}/10</strong></span>
+                                        <span>&bull;</span>
+                                        <span class="badge badge-verified" style="font-size: 12px;">Rank Score: {{ s.overall_score or 7.2 }}/10</span>
+                                    </div>
+
+                                    <div>
+                                        {% if current_user and current_user.role == 'citizen' %}
+                                            <form action="{{ url_for('citizen.vote_solution', solution_id=s.id) }}" method="POST" style="display: inline;">
+                                                <button type="submit" class="btn btn-sm {% if s.id in user_voted_solutions %}btn-green{% else %}btn-saffron{% endif %}"
+                                                        {% if s.id in user_voted_solutions %}disabled{% endif %}>
+                                                    <i class="fa-solid fa-thumbs-up"></i>
+                                                    {% if s.id in user_voted_solutions %}Voted{% else %}Vote for this Solution{% endif %}
+                                                </button>
+                                            </form>
+                                        {% elif not current_user %}
+                                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-sm">
+                                                <i class="fa-solid fa-thumbs-up"></i> Login to Vote
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                        <h3>No solutions proposed yet</h3>
+                        <p>Are you an engineering student or domain specialist? Submit an innovative solution to solve this civic issue!</p>
+                        {% if current_user and current_user.role == 'student' %}
+                            <a href="{{ url_for('expert.submit_solution', problem_id=problem.id) }}" class="btn btn-saffron btn-sm mt-2">
+                                Be the First to Propose Solution
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Verified Impact Metrics Card (if completed) -->
+        {% if impact %}
+        <div class="card mb-3" style="border: 2px solid var(--green); background: #f0fdf4;">
+            <div class="card-header" style="background: #dcfce7;">
+                <h3 style="color: var(--green);"><i class="fa-solid fa-square-poll-vertical"></i> Verified Implementation & Ground Impact</h3>
+                <span class="badge badge-completed">Impact Verified</span>
+            </div>
+            <div class="card-body">
+                <div class="grid grid-3 gap-2 mb-3 text-center">
+                    <div class="card card-body" style="padding: 16px;">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Before Implementation</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #ef4444; margin: 4px 0;">{{ impact.before_value }}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">{{ impact.before_metric }}</div>
+                    </div>
+                    <div class="card card-body" style="padding: 16px;">
+                        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">After Implementation</div>
+                        <div style="font-size: 24px; font-weight: 800; color: var(--green); margin: 4px 0;">{{ impact.after_value }}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">{{ impact.after_metric }}</div>
+                    </div>
+                    <div class="card card-body" style="padding: 16px; background: var(--green); color: white;">
+                        <div style="font-size: 11px; color: rgba(255,255,255,0.8); text-transform: uppercase;">Measured Improvement</div>
+                        <div style="font-size: 28px; font-weight: 900; color: white; margin: 4px 0;">{{ impact.improvement_percentage }}%</div>
+                        <div style="font-size: 12px; color: rgba(255,255,255,0.9);">Verified Reduction</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-3 gap-2" style="font-size: 13px;">
+                    <div><strong>People Benefited:</strong> {{ impact.people_benefited }} citizens</div>
+                    <div><strong>Execution Cost:</strong> {{ impact.implementation_cost }}</div>
+                    <div><strong>Completion Date:</strong> {{ impact.completion_date }}</div>
+                </div>
+
+                {% if impact.description %}
+                <p style="font-size: 14px; margin-top: 14px; line-height: 1.6; color: var(--text-secondary);">
+                    {{ impact.description }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: AI Analysis & Department Routing Info -->
+    <div>
+        <!-- AI NLP Analysis Card -->
+        <div class="card mb-3" style="border: 2px solid var(--primary-200); background: linear-gradient(180deg, #f8faff 0%, #ffffff 100%);">
+            <div class="card-header" style="background: var(--primary-50);">
+                <h3 style="color: var(--primary); font-size: 15px;">
+                    <i class="fa-solid fa-brain"></i> AI Problem Analysis
+                </h3>
+                <span class="badge badge-verified">NLP Output</span>
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-2">
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Predicted Category</div>
+                    <div style="font-size: 16px; font-weight: 700; color: var(--primary); margin-top: 2px;">
+                        {{ problem.category_icon or '📋' }} {{ problem.category or problem.ai_category }}
+                    </div>
+                </div>
+
+                <div class="form-group mb-2">
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Sub-Category</div>
+                    <div style="font-size: 14px; font-weight: 600; color: var(--text);">
+                        {{ problem.sub_category or problem.ai_sub_category or 'General Issues' }}
+                    </div>
+                </div>
+
+                <div class="form-group mb-2">
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Urgency Priority</div>
+                    <div style="margin-top: 4px;">
+                        <span class="badge badge-{{ (problem.priority or problem.ai_priority or 'MEDIUM')|lower }}" style="font-size: 12px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> {{ problem.priority or problem.ai_priority or 'MEDIUM' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-0">
+                    <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">AI Model Confidence</div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
+                        <div style="flex: 1; height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+                            <div style="height: 100%; width: {{ ((problem.ai_confidence or 0.91) * 100)|int }}%; background: linear-gradient(90deg, var(--primary) 0%, var(--green) 100%);"></div>
+                        </div>
+                        <strong style="font-size: 14px; color: var(--text);">{{ ((problem.ai_confidence or 0.91) * 100)|int }}%</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assigned Administrative Department -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3><i class="fa-solid fa-building-columns"></i> Gov Department</h3>
+            </div>
+            <div class="card-body" style="font-size: 13px;">
+                {% if problem.department_name %}
+                    <div style="font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px;">
+                        {{ problem.department_name }}
+                    </div>
+                    <p style="color: var(--text-secondary);">This issue has been routed to this line department for official verification and resource provisioning.</p>
+                {% else %}
+                    <p style="color: var(--text-muted);">Awaiting official line department assignment by district administrators.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
